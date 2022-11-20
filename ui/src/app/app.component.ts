@@ -38,6 +38,16 @@ export class AppComponent {
       eventSource.onmessage = (event) => {
         console.debug('Received event: ', event);
         observer.next(event.data);
+        this.http
+          .post(
+            "http://localhost:8080/messages/ack",
+            "0",
+            {
+              params: {
+                username: "root"
+              }
+            }
+          ).subscribe()
       };
       eventSource.onerror = (error) => {
         // readyState === 0 (closed) means the remote source closed the connection,
@@ -73,6 +83,7 @@ export class AppComponent {
           this.status = "Message sent successfully!";
           this.changeDetector.detectChanges()
           console.log(data);
+          alert("Message was read by " + data)
         },
         error: (error) => console.log(error),
         complete: () => {

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController()
 @RequestMapping(value = {"messages"})
 @CrossOrigin(origins = {"http://localhost:4200"})
@@ -19,8 +21,13 @@ public class MessageController {
     }
 
     @PostMapping
-    public Mono<Boolean> send(@RequestBody String text, @RequestParam String username) {
-        return messageService.send(text);
+    public Mono<List<String>> send(@RequestBody String text, @RequestParam String username) {
+        return messageService.send(text, username).collectList();
+    }
+
+    @PostMapping(path = "ack")
+    public void ack(@RequestBody String messageId, @RequestParam String username) {
+        messageService.ack(messageId, username);
     }
 
     @GetMapping(produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
