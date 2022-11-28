@@ -1,9 +1,9 @@
-<div class="scrollframe" #scrollframe>
+<div class="left-container">
+  <input type="text" placeholder="Message..." [(ngModel)]="input" (keyup.enter)="sendMessage(input)"/>
+  <span *ngIf="status">{{ status }}</span>
+</div>
+<div class="right-container">
   <div class="message" *ngFor="let message of messages">
     <a>{{ message }}</a>
   </div>
-</div>
-<div class="footer">
-  <input type="text" placeholder="Message..." [(ngModel)]="input" (keyup.enter)="sendMessage(input)"/>
-  <span *ngIf="status">{{ status }}</span>
 </div>

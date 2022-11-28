@@ -10,9 +10,6 @@ import {HttpClient} from "@angular/common/http";
 })
 export class AppComponent {
 
-  @ViewChild('scrollframe', {static: false})
-  scrollFrame: ElementRef | undefined;
-
   messages = Array<string>();
   input: string = "";
   status: string = "";
