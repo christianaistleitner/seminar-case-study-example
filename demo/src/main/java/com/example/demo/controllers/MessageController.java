@@ -16,7 +16,7 @@ import static java.time.Duration.ofSeconds;
 @CrossOrigin(origins = {"http://localhost:4200"})
 public class MessageController {
 
-    private final Sinks.Many<PacketDto> sink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<PacketDto> packetSink = Sinks.many().multicast().directBestEffort();
 
     public MessageController() {
         // TODO: Using Schedulers.enableMetrics(); we could export Micrometer metrics
@@ -26,8 +26,8 @@ public class MessageController {
     @PostMapping(path = "send", produces = {MediaType.TEXT_PLAIN_VALUE})
     public String send(@RequestBody String text, @RequestParam String username) {
         MessageDto message = new MessageDto(text, username);
-        sink.asFlux()
-                .doOnSubscribe(ignore -> sink.tryEmitNext(message))
+        packetSink.asFlux()
+                .doOnSubscribe(ignore -> packetSink.tryEmitNext(message))
                 .filter(it -> it.getType() == PacketDto.Type.ACK)
                 .cast(AckDto.class)
                 .any(it -> it.getMessageId().equals(message.getId()))
@@ -40,11 +40,11 @@ public class MessageController {
 
     @PostMapping(path = "ack", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void ack(@RequestBody String messageId, @RequestParam String username) {
-        sink.tryEmitNext(new AckDto(username, messageId));
+        packetSink.tryEmitNext(new AckDto(username, messageId));
     }
 
     @GetMapping(path = "stream", produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
     public Flux<PacketDto> subscribe(@RequestParam String username) {
-        return sink.asFlux().filter(it -> it.getRecipient().equals(username));
+        return packetSink.asFlux().filter(it -> it.getRecipient().equals(username));
     }
 }
