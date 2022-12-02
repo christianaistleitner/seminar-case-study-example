@@ -31,20 +31,24 @@ export class AppComponent {
 
   getMessages(): Observable<string> {
     return new Observable<string>((observer) => {
-      let eventSource = new EventSource("http://localhost:8080/messages");
+      let eventSource = new EventSource("http://localhost:8080/messages/stream?username=root");
       eventSource.onmessage = (event) => {
         console.debug('Received event: ', event);
         observer.next(event.data);
-        this.http
-          .post(
-            "http://localhost:8080/messages/ack",
-            "0",
-            {
-              params: {
-                username: "root"
+        let obj = JSON.parse(event.data);
+        if (obj.type == "MSG") {
+          this.http
+            .post(
+              "http://localhost:8080/messages/ack",
+              obj.id,
+              {
+                params: {
+                  username: "root"
+                }
               }
-            }
-          ).subscribe()
+            ).subscribe()
+        }
+
       };
       eventSource.onerror = (error) => {
         // readyState === 0 (closed) means the remote source closed the connection,
@@ -66,7 +70,7 @@ export class AppComponent {
     console.log("sending message:" + text);
     this.http
       .post(
-        "http://localhost:8080/messages",
+        "http://localhost:8080/messages/send",
         text,
         {
           params: {

@@ -1,15 +1,13 @@
 package com.example.demo.controllers;
 
-import com.example.demo.models.Ack;
-import com.example.demo.models.Message;
+import com.example.demo.models.AckDto;
+import com.example.demo.models.MessageDto;
+import com.example.demo.models.PacketDto;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+import reactor.core.scheduler.Schedulers;
 
 import static java.time.Duration.ofSeconds;
 
@@ -18,41 +16,35 @@ import static java.time.Duration.ofSeconds;
 @CrossOrigin(origins = {"http://localhost:4200"})
 public class MessageController {
 
-    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    private final Sinks.Many<Message> messageSink = Sinks.many().multicast().directBestEffort();
-
-    private final Sinks.Many<Ack> ackSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<PacketDto> sink = Sinks.many().multicast().directBestEffort();
 
     public MessageController() {
+        // TODO: Using Schedulers.enableMetrics(); we could export Micrometer metrics
+        // and take a look at thread pool utilization, etc.
     }
 
-    @PostMapping
-    public Mono<List<String>> send(@RequestBody String text, @RequestParam String username) {
-        Message message = new Message(text, username);
-        return Mono.just(message)
-                .flatMapMany(it -> {
-                    messageSink.tryEmitNext(it);
-                    return ackSink.asFlux();
-                })
-                .filter(it -> it.getMessageId().equals(message.getId()))
+    @PostMapping(path = "send", produces = {MediaType.TEXT_PLAIN_VALUE})
+    public String send(@RequestBody String text, @RequestParam String username) {
+        MessageDto message = new MessageDto(text, username);
+        sink.asFlux()
+                .doOnSubscribe(ignore -> sink.tryEmitNext(message))
+                .filter(it -> it.getType() == PacketDto.Type.ACK)
+                .cast(AckDto.class)
+                .any(it -> it.getMessageId().equals(message.getId()))
                 .timeout(ofSeconds(5))
                 .retry(3)
-                .onErrorComplete()
-                .map(it -> it.getUsername())
-                .collectList();
+                .subscribeOn(Schedulers.parallel())
+                .subscribe();
+        return message.getId();
     }
 
-    @PostMapping(path = "ack")
+    @PostMapping(path = "ack", produces = {MediaType.TEXT_PLAIN_VALUE})
     public void ack(@RequestBody String messageId, @RequestParam String username) {
-        Ack ack = new Ack(username, messageId);
-        ackSink.tryEmitNext(ack);
+        sink.tryEmitNext(new AckDto(username, messageId));
     }
 
-    @GetMapping(produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
-    public Flux<String> subscribe() {
-        return messageSink.asFlux()
-                .sample(ofSeconds(1))
-                .map(it -> "[" + it.getSentTimestamp().format(dtf) + "] " + it.getText());
+    @GetMapping(path = "stream", produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
+    public Flux<PacketDto> subscribe(@RequestParam String username) {
+        return sink.asFlux().filter(it -> it.getRecipient().equals(username));
     }
 }

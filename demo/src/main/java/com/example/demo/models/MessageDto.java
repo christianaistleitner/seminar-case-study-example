@@ -3,7 +3,7 @@ package com.example.demo.models;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class Message {
+public class MessageDto extends PacketDto {
 
     private final String id = UUID.randomUUID().toString();
 
@@ -13,7 +13,8 @@ public class Message {
 
     private final LocalDateTime sentTimestamp = LocalDateTime.now();
 
-    public Message(String text, String author) {
+    public MessageDto(String text, String author) {
+        super(author);
         this.text = text;
         this.author = author;
     }
@@ -32,5 +33,10 @@ public class Message {
 
     public LocalDateTime getSentTimestamp() {
         return sentTimestamp;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.MSG;
     }
 }
