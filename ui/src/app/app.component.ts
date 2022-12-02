@@ -43,7 +43,8 @@ export class AppComponent {
               obj.id,
               {
                 params: {
-                  username: "root"
+                  username: "root",
+                  recipient: obj.author,
                 }
               }
             ).subscribe()
@@ -74,7 +75,8 @@ export class AppComponent {
         text,
         {
           params: {
-            username: "root"
+            username: "root",
+            recipient: "root"
           }
         }
       )

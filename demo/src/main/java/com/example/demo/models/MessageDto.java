@@ -13,8 +13,8 @@ public class MessageDto extends PacketDto {
 
     private final LocalDateTime sentTimestamp = LocalDateTime.now();
 
-    public MessageDto(String text, String author) {
-        super(author);
+    public MessageDto(String text, String author, String recipient) {
+        super(recipient);
         this.text = text;
         this.author = author;
     }

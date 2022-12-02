@@ -5,8 +5,8 @@ public class AckDto extends PacketDto {
     private final String username;
     private final String messageId;
 
-    public AckDto(String username, String messageId) {
-        super(username);
+    public AckDto(String username, String messageId, String recipient) {
+        super(recipient);
         this.username = username;
         this.messageId = messageId;
     }

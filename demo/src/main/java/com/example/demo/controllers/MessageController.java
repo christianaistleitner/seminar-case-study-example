@@ -24,11 +24,11 @@ public class MessageController {
     }
 
     @PostMapping(path = "send", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public String send(@RequestBody String text, @RequestParam String username) {
-        MessageDto message = new MessageDto(text, username);
+    public String send(@RequestBody String text, @RequestParam String username, @RequestParam String recipient) {
+        MessageDto message = new MessageDto(text, username, recipient);
         packetSink.asFlux()
                 .doOnSubscribe(ignore -> packetSink.tryEmitNext(message))
-                .filter(it -> it.getType() == PacketDto.Type.ACK)
+                .filter(it -> it.getType() == PacketDto.Type.ACK && it.getRecipient().equals(username))
                 .cast(AckDto.class)
                 .any(it -> it.getMessageId().equals(message.getId()))
                 .timeout(ofSeconds(5))
@@ -39,8 +39,8 @@ public class MessageController {
     }
 
     @PostMapping(path = "ack", produces = {MediaType.TEXT_PLAIN_VALUE})
-    public void ack(@RequestBody String messageId, @RequestParam String username) {
-        packetSink.tryEmitNext(new AckDto(username, messageId));
+    public void ack(@RequestBody String messageId, @RequestParam String username, @RequestParam String recipient) {
+        packetSink.tryEmitNext(new AckDto(username, messageId, recipient));
     }
 
     @GetMapping(path = "stream", produces = {MediaType.TEXT_EVENT_STREAM_VALUE})
