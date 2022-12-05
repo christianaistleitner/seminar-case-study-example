@@ -1,9 +1,15 @@
-<div class="left-container">
-  <input type="text" placeholder="Message..." [(ngModel)]="input" (keyup.enter)="sendMessage(input)"/>
-  <span *ngIf="status">{{ status }}</span>
+<div class="username-container" *ngIf="!_username">
+  <input type="text" placeholder="Username" (keyup.enter)="username = usernameInput.value" #usernameInput/>
 </div>
-<div class="right-container">
-  <div class="message" *ngFor="let message of messages">
-    <a>{{ message }}</a>
+<ng-container *ngIf="_username">
+  <div class="left-container">
+    <input type="text" placeholder="Recipient" #usernameInput/>
+    <input type="text" placeholder="Message..." [(ngModel)]="input" (keyup.enter)="sendMessage(input, usernameInput.value)"/>
+    <span *ngIf="status">{{ status }}</span>
   </div>
-</div>
+  <div class="right-container">
+    <div class="message" *ngFor="let message of messages">
+      <a>{{ message }}</a>
+    </div>
+  </div>
+</ng-container>
