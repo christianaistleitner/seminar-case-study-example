@@ -26,22 +26,15 @@ export class AppComponent {
     this._username = value;
     let eventSource = new EventSource("http://localhost:8080/messages/stream?username=" + this._username);
     eventSource.onmessage = (event) => {
-      console.debug('Received event: ', event);
       this.messages = [event.data, ...this.messages];
       this.changeDetector.detectChanges()
-      let obj = JSON.parse(event.data);
-      if (obj.type == "MSG") {
-        this.http
-          .post(
-            "http://localhost:8080/messages/ack",
-            obj.id,
-            {
-              params: {
-                username: this._username!,
-                recipient: obj.author,
-              }
-            }
-          ).subscribe()
+
+      let packet = JSON.parse(event.data);
+      if (packet.type == "MSG") {
+        this.http.post(
+          `http://localhost:8080/messages/ack?username=${this._username}&recipient=${packet.author}`,
+          packet.id
+        ).subscribe()
       }
 
     };
@@ -50,7 +43,7 @@ export class AppComponent {
       // so we can safely treat it as a normal situation. Another way
       // of detecting the end of the stream is to insert a special element
       // in the stream of events, which the client can identify as the last one.
-      if(eventSource.readyState === 0) {
+      if (eventSource.readyState === 0) {
         console.log('The stream has been closed by the server.');
         eventSource.close();
       } else {
