@@ -33,7 +33,7 @@ public class MessageController {
         MessageDto message = new MessageDto(text, username, recipient);
         eventBus.asFlux()
                 .doOnSubscribe(ignore -> eventBus.tryEmitNext(message))
-                .filter(it -> it.getType() == PacketDto.Type.ACK && it.getRecipient().equals(username))
+                .filter(it -> it.getType() == PacketDto.Type.ACK)
                 .cast(AckDto.class)
                 .any(it -> it.getMessageId().equals(message.getId()))
                 .timeout(ofSeconds(5))
