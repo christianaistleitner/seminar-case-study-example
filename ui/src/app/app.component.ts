@@ -13,7 +13,7 @@ export class AppComponent {
   input: string = "";
   status: string = "";
 
-  _username: string | null | undefined = null;
+  username: string | null | undefined = null;
 
   constructor(private changeDetector: ChangeDetectorRef, private http: HttpClient) {
   }
@@ -22,9 +22,8 @@ export class AppComponent {
     this.messages = [];
   }
 
-  set username(value: string) {
-    this._username = value;
-    let eventSource = new EventSource("http://localhost:8080/messages/stream?username=" + this._username);
+  setupMessageStream() {
+    let eventSource = new EventSource("http://localhost:8080/messages/stream?username=" + this.username);
     eventSource.onmessage = (event) => {
       this.messages = [event.data, ...this.messages];
       this.changeDetector.detectChanges()
@@ -32,7 +31,7 @@ export class AppComponent {
       let packet = JSON.parse(event.data);
       if (packet.type == "MSG") {
         this.http.post(
-          `http://localhost:8080/messages/ack?username=${this._username}&recipient=${packet.author}`,
+          `http://localhost:8080/messages/ack?username=${this.username}&recipient=${packet.author}`,
           packet.id
         ).subscribe()
       }
@@ -53,31 +52,17 @@ export class AppComponent {
   }
 
   sendMessage(text: string, recipient: string) {
-    console.log("sending message:" + text);
     this.http
       .post(
         "http://localhost:8080/messages/send",
         text,
         {
           params: {
-            username: this._username!,
+            username: this.username!,
             recipient: recipient
           }
         }
       )
-      .subscribe({
-        next: (data) => {
-          this.input = ""
-          this.status = "Message sent successfully!";
-          this.changeDetector.detectChanges()
-          console.log(data);
-          alert("Message was read by " + data)
-        },
-        error: (error) => console.log(error),
-        complete: () => {
-          console.log('complete');
-        }
-      });
+      .subscribe();
   }
-
 }

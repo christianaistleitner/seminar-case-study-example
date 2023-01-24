@@ -1,10 +1,14 @@
-<div class="username-container" *ngIf="!_username">
-  <input type="text" placeholder="Username" (keyup.enter)="username = usernameInput.value" #usernameInput/>
+<div class="username-container" *ngIf="!username">
+  <input type="text" placeholder="Username"
+         (keyup.enter)="username = usernameInput.value; setupMessageStream()"
+         #usernameInput/>
 </div>
-<ng-container *ngIf="_username">
+<ng-container *ngIf="username">
   <div class="left-container">
     <input type="text" placeholder="Recipient" #usernameInput/>
-    <input type="text" placeholder="Message..." [(ngModel)]="input" (keyup.enter)="sendMessage(input, usernameInput.value)"/>
+    <input type="text" placeholder="Message..."
+           [(ngModel)]="input"
+           (keyup.enter)="sendMessage(input, usernameInput.value)"/>
     <span *ngIf="status">{{ status }}</span>
   </div>
   <div class="right-container">
